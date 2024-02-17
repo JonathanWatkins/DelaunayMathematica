@@ -1,0 +1,53 @@
+Needs["ComputationalGeometry`"]
+MakeDislocationsGraph[full_, xl_, xh_, yl_, yh_, pmsize_, imagesize_, 
+  t_] := (
+  
+  OnlyRed[{x_, y_, c_}] := If[c == 5, {x, y}, {}];
+  OnlyBlue[{x_, y_, c_}] := If[c == 7, {x, y}, {}];
+  OnlyOthers[{x_, y_, c_}] := If[c != 5 && c != 7, {x, y}, {}];
+  
+  vvc = DelaunayMesh[full] ["VertexVertexConnectivity"];
+  
+  PointsWithNN =
+   graph = 
+    Table[{full[[n]][[1]], full[[n]][[2]], Length[vvc[[n]]]}, {n, 1, 
+      Length[full]}];
+  
+  redPosData = DeleteCases[Map[OnlyRed, PointsWithNN], {}, 2];
+  bluePosData = DeleteCases[Map[OnlyBlue, PointsWithNN] , {}, 2];
+  grayPosData = DeleteCases[Map[OnlyOthers, PointsWithNN], {}, 2];
+  
+  
+  ar = (yh - yl)/(xh - xl);
+  gRed = Graphics[
+    Map[{Red, PointSize[pmsize], Point[{#[[1]], #[[2]]}]} &, 
+     redPosData], Axes -> True, ImageSize -> imagesize, 
+    AspectRatio -> ar, PlotRange -> {{xl, xh}, {yl, yh}}];
+  gBlue = 
+   Graphics[
+    Map[{Blue, PointSize[pmsize], Point[{#[[1]], #[[2]]}]} &, 
+     bluePosData], Axes -> True, ImageSize -> imagesize, 
+    AspectRatio -> ar, PlotRange -> {{xl, xh}, {yl, yh}}];
+  gOthers = 
+   Graphics[
+    Map[{Gray, PointSize[pmsize], Point[{#[[1]], #[[2]]}]} &, 
+     grayPosData], Axes -> True, ImageSize -> imagesize, 
+    AspectRatio -> ar, PlotRange -> {{xl, xh}, {yl, yh}}];
+  time = Graphics[Text[t, {5, 2}]];
+  lines = DelaunayMesh[full];
+  Show[lines, gRed, gBlue, gOthers, time]
+  )
+
+SetDirectory[NotebookDirectory[]]
+number = 1024;
+xl = 0; yl = 0; xh = 4.77; yh = 4.77;
+
+p = ReadList["Output.dat", Table[{Number, Number}, {i, number}]];
+Length[p]
+frames = {};
+Monitor[
+ For[i = 1, i <= Length[p], i++,
+  g = MakeDislocationsGraph[p[[i]], xl, xh, yl, yh, 0.02, 800, i];
+  frames = Append[frames, g];
+  ]
+ , g]
